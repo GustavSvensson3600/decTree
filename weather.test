@@ -1,0 +1,32 @@
+before 0.940285958671
+outlook rainy 0.970950594455 -0.346768069448 5
+outlook overcast 0.0 -0.0 4
+outlook sunny 0.970950594455 -0.346768069448 5
+outlook 0.246749819774
+temperature 72 1.0 -0.142857142857 2
+temperature 75 0.0 -0.0 2
+temperature 64 0.0 -0.0 1
+temperature 65 0.0 -0.0 1
+temperature 71 0.0 -0.0 1
+temperature 70 0.0 -0.0 1
+temperature 68 0.0 -0.0 1
+temperature 83 0.0 -0.0 1
+temperature 80 0.0 -0.0 1
+temperature 81 0.0 -0.0 1
+temperature 69 0.0 -0.0 1
+temperature 85 0.0 -0.0 1
+temperature 0.797428815813
+humidity 95 0.0 -0.0 1
+humidity 75 0.0 -0.0 1
+humidity 65 0.0 -0.0 1
+humidity 70 0.918295834054 -0.196777678726 3
+humidity 91 0.0 -0.0 1
+humidity 90 1.0 -0.142857142857 2
+humidity 80 0.0 -0.0 2
+humidity 85 0.0 -0.0 1
+humidity 86 0.0 -0.0 1
+humidity 96 0.0 -0.0 1
+humidity 0.600651137088
+windy FALSE 0.811278124459 -0.463587499691 8
+windy TRUE 1.0 -0.428571428571 6
+windy 0.0481270304083
