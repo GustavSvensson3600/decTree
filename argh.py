@@ -15,7 +15,7 @@ class Attr:
 
         attr_list = line.index(' ', 11) + 1
         self.name = line[11:attr_list-1]
-                self.values = set()
+        self.values = set()
 
         self.type = "enum"
         
@@ -136,13 +136,12 @@ def ID3(dataset, target_attr, remaining_attr, parent_attr, branch_label):
     if len(dataset) == 0:
         # no dataset :(
         pass
-
     for value in target_attr.values:
         split_set = split(dataset, target_attr, value)
         if len(split_set) == len(dataset):
             # value classifies whole dataset
             return node.LeafNode(parent_attr, branch_label, value)
-    if len(remaining__attr) == 0:
+    if len(remaining_attr) == 0:
         best_value = target_attr.values[0]
         best_cmp = len(split(dataset, target_attr, best_value))
         for value in target_attr.values:
@@ -152,7 +151,23 @@ def ID3(dataset, target_attr, remaining_attr, parent_attr, branch_label):
                 best_cmp = len(split_set)
         return node.LeafNode(parent_attr,branch_label,best_value)
     best_attr = pick_attr(dataset,target_attr,remaining_attr)
-    node.TreeNode(best_attr, )
+    root = node.TreeNode(best_attr, branch_label)
+    for label in best_attr.values:
+        split_dataset = split(nodes, attr, label)
+        if len(split_dataset) == 0:
+            #Then below this new branch add a leaf node with label = most common target value in the examples
+            best_value = target_attr.values[0]
+            best_cmp = len(split(split_dataset, target_attr, best_value))
+            for value in target_attr.values:
+                split_set = split(split_dataset, target_attr, value)
+                if len(split_set) > best_cmp:
+                    best_cmp = len(split_set)
+                    best_value = value
+            root.add_child(node.LeafNode(best_attr, label, best_value))
+        else:
+            remaining_attr.remove(best_attr)
+            print 'best attribute: ', best_attr.name, ' remanining is ', remaining_attr
+            root.add_child(ID3(split_dataset, target_attr, remaining_attr, best_attr, label))
 
 # @relation <>
 # @attribute <> <>
@@ -188,3 +203,5 @@ for attr in attrs:
         #print attr.name, label, e, gain, len(dataset)
 
     print attr.name, attr_gain
+attrs.remove(attrs[-1])
+root = ID3(nodes, attrs[-1], attrs, "root", "root")
