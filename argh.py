@@ -157,6 +157,9 @@ def ID3(dataset, target_attr, remaining_attr, parent_attr, branch_label):
         if len(split_dataset) == 0:
             #Then below this new branch add a leaf node with label = most common target value in the examples
             best_value = target_attr.values[0]
+            #So question is if split_dataset or dataset should be used, read above comment
+            #They seemed to use the convention examples[a_i] for split dataset
+            #Which would imply the unsplit one, but that seems strange so ?
             best_cmp = len(split(split_dataset, target_attr, best_value))
             for value in target_attr.values:
                 split_set = split(split_dataset, target_attr, value)
