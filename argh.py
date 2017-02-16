@@ -1,7 +1,7 @@
 from math import log
 import string
 import node
-
+import argparse
 
 class Attr:
     def __init__(self, line):
@@ -179,7 +179,12 @@ def ID3(dataset, target_attr, remaining_attr, parent_attr, branch_label):
     
     return root
 
-with open("weather.nominal.arff") as f:
+parser = argparse.ArgumentParser(description="Create a decision tree using ID3")
+parser.add_argument("--file", help="select your file", action="store", type=str, dest="file", default="weather.nominal.arff")
+parser.add_argument("--target", help="select your target", action="store", type=str, dest="target", default="play")
+args = parser.parse_args()
+
+with open(args.file) as f:
     content = f.readlines()
 
     content = [x.strip() for x in content if x.strip() != '']
@@ -195,6 +200,8 @@ with open("weather.nominal.arff") as f:
             pass
         elif line.find("@attribute") != -1:
             attrs.append(Attr(line))
+            if attrs[-1].name == args.target:
+                target = attrs[-1]
         elif line.find("@data") != -1:
             pass
         elif line.find("%") != -1:
@@ -202,6 +209,5 @@ with open("weather.nominal.arff") as f:
         else:
             nodes.append(Entry(line, attrs))
 
-    play = attrs[-1]
-    root = ID3_init(nodes, play, attrs)
+    root = ID3_init(nodes, target, attrs)
     root.print_node()
