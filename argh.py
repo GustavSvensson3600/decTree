@@ -2,12 +2,6 @@ from math import log
 import string
 import node
 
-content = list()
-
-with open("weather.arff") as f:
-    content = f.readlines()
-
-content = [x.strip() for x in content if x.strip() != ''] 
 
 class Attr:
     def __init__(self, line):
@@ -26,8 +20,6 @@ class Attr:
             # TODO: string, date, real/int/numeric
             self.type = "numeric"
 
-        print self.name, self.values
-
     def offer(self, value):
         self.values.add(value)
 
@@ -39,6 +31,9 @@ class Attr:
 
     def is_enum(self):
         return self.type == "enum"
+
+    def __repr__(self):
+        return self.name + ": " + self.values.__repr__()
 
 class EntryData:
     def __init__(self, attr, value):
@@ -113,98 +108,100 @@ def entropy(set, target_attr):
     return total_entropy
 
 def pick_attr(dataset, target_attr, availible_attr):
-    before = entropy(nodes, target_attr)
+    """ Pick the attribute from available_attr that results
+        in the maximal information gain with respect to target_attr.
+    """
+    items = len(dataset)
+    before = entropy(dataset, target_attr)
     best_attri = attrs[0]
     best_gain = 0
 
     for attr in availible_attr:
-        attr_count = len(nodes)
         attr_gain = before
         for label in attr.values:
-            dataset = split(nodes, attr, label)
-            e = entropy(dataset, target_attr)
-            gain = - (len(dataset) / float(attr_count)) * e
+            split_dataset = split(dataset, attr, label)
+            e = entropy(split_dataset, target_attr)
+            gain = - (len(split_dataset) / float(items)) * e
             attr_gain += gain
         if attr_gain > best_gain:
             best_attri = attr
             best_gain = attr_gain
     return best_attri
-            #print attr.name, label, e, gain, len(dataset)
 
+def find_optimal_label(dataset, target_attr):
+    """ Find the most common label in the dataset """
+    best_value = target_attr.values.pop()
+    best_cmp = len(split(dataset, target_attr, best_value))
+    target_attr.values.add(best_value)
+
+    for value in target_attr.values:
+        split_set = split(dataset, target_attr, value)
+        if len(split_set) > best_cmp:
+            best_value = value
+            best_cmp = len(split_set)
+    
+    return best_value
+
+def ID3_init(dataset, target_attr, initial_attrs):
+    """ Use a dummy root node attribute because of our strange tree """
+    initial_attrs.remove(target_attr)
+    fake_attr = Attr("@attribute root {root}")
+    return ID3(dataset, target_attr, initial_attrs, fake_attr, "root")
 
 def ID3(dataset, target_attr, remaining_attr, parent_attr, branch_label):
-    if len(dataset) == 0:
-        # no dataset :(
-        pass
+    """ Recursively create an ID3. Rememeber the parent and branch so
+        that we can print the tree.
+    """
+    # We can terminate if the dataset is fully classified
     for value in target_attr.values:
         split_set = split(dataset, target_attr, value)
         if len(split_set) == len(dataset):
-            # value classifies whole dataset
             return node.LeafNode(parent_attr, branch_label, value)
+
+    # If no attributes remain then ask the dataset which label is best classified
     if len(remaining_attr) == 0:
-        best_value = target_attr.values[0]
-        best_cmp = len(split(dataset, target_attr, best_value))
-        for value in target_attr.values:
-            split_set = split(dataset, target_attr, value)
-            if len(split_set) > best_cmp:
-                best_value = value
-                best_cmp = len(split_set)
-        return node.LeafNode(parent_attr,branch_label,best_value)
-    best_attr = pick_attr(dataset,target_attr,remaining_attr)
+        label = find_optimal_label(dataset, target_attr)
+        return node.LeafNode(parent_attr, branch_label, label)
+
+    # Pick best attribute according to information gain
+    best_attr = pick_attr(dataset, target_attr, remaining_attr)
+    remaining_attr.remove(best_attr)
+
+    # Create new tree rooted at selected attribute
     root = node.TreeNode(best_attr, branch_label)
     for label in best_attr.values:
-        split_dataset = split(nodes, attr, label)
+        split_dataset = split(dataset, best_attr, label)
         if len(split_dataset) == 0:
-            #Then below this new branch add a leaf node with label = most common target value in the examples
-            best_value = target_attr.values[0]
-            #So question is if split_dataset or dataset should be used, read above comment
-            #They seemed to use the convention examples[a_i] for split dataset
-            #Which would imply the unsplit one, but that seems strange so ?
-            best_cmp = len(split(split_dataset, target_attr, best_value))
-            for value in target_attr.values:
-                split_set = split(split_dataset, target_attr, value)
-                if len(split_set) > best_cmp:
-                    best_cmp = len(split_set)
-                    best_value = value
+            best_value = find_optimal_label(dataset, target_attr)
             root.add_child(node.LeafNode(best_attr, label, best_value))
         else:
-            remaining_attr.remove(best_attr)
-            print 'best attribute: ', best_attr.name, ' remanining is ', remaining_attr
             root.add_child(ID3(split_dataset, target_attr, remaining_attr, best_attr, label))
-
-# @relation <>
-# @attribute <> <>
-# @data
-nodes = list()
-attrs = list()
-for line in content:
-    if line.find("@relation") != -1:
-        pass
-    elif line.find("@attribute") != -1:
-        attrs.append(Attr(line))
-    elif line.find("@data") != -1:
-        pass
-    elif line.find("%") != -1:
-        pass
-    else:
-        nodes.append(Entry(line, attrs))
-
-play = attrs[-1]
-before = entropy(nodes, play)
-print 'before', before
-for attr in attrs:
-    if attr == play:
-        continue
     
-    attr_count = len(nodes)
-    attr_gain = before
-    for label in attr.values:
-        dataset = split(nodes, attr, label)
-        e = entropy(dataset, play)
-        gain = - (len(dataset) / float(attr_count)) * e
-        attr_gain += gain
-        #print attr.name, label, e, gain, len(dataset)
+    return root
 
-    print attr.name, attr_gain
-attrs.remove(attrs[-1])
-root = ID3(nodes, attrs[-1], attrs, "root", "root")
+with open("weather.nominal.arff") as f:
+    content = f.readlines()
+
+    content = [x.strip() for x in content if x.strip() != '']
+
+    nodes = list()
+    attrs = list()
+    
+    # @relation <>
+    # @attribute <> <>
+    # @data
+    for line in content:
+        if line.find("@relation") != -1:
+            pass
+        elif line.find("@attribute") != -1:
+            attrs.append(Attr(line))
+        elif line.find("@data") != -1:
+            pass
+        elif line.find("%") != -1:
+            pass
+        else:
+            nodes.append(Entry(line, attrs))
+
+    play = attrs[-1]
+    root = ID3_init(nodes, play, attrs)
+    root.print_node()
