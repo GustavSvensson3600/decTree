@@ -11,7 +11,7 @@ class TreeNode(Node):
         self.children.append(child)
 
     def print_deep(self, depth, parent):
-        print "\t" * depth, parent.name, "=", self.label
+        print ("    " * depth) + parent.name, "=", self.label
         for child in self.children:
             child.print_deep(depth+1, self.attribute)
 
@@ -26,4 +26,4 @@ class LeafNode(Node):
         self.klass = klass
 
     def print_deep(self, depth, parent):
-        print "\t" * depth,self.attribute.name, "=", self.label + ":", self.klass
+        print ("    " * depth) + self.attribute.name, "=", self.label + ":", self.klass
