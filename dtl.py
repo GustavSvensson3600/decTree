@@ -94,7 +94,7 @@ def pick_attr(dataset, target_attr, available_attr):
     before = entropy(dataset, target_attr)
     best_attri = available_attr[0]
     best_gain = 0
-
+    #print "--- NEW ROUND ---"
     for attr in available_attr:
         attr_gain = before
         for label in attr.values:
@@ -105,6 +105,7 @@ def pick_attr(dataset, target_attr, available_attr):
         if attr_gain > best_gain:
             best_attri = attr
             best_gain = attr_gain
+    #    print "Attribute : ", attr, " : ", attr_gain
     return best_attri
 
 def find_optimal_label(dataset, target_attr):
@@ -118,7 +119,6 @@ def find_optimal_label(dataset, target_attr):
         if len(split_set) > best_cmp:
             best_value = value
             best_cmp = len(split_set)
-
     return best_value
 
 def ID3_init(dataset, target_attr, initial_attrs):

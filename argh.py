@@ -5,8 +5,8 @@ import dtl
 
 
 parser = argparse.ArgumentParser(description="Create a decision tree using ID3")
-parser.add_argument("--file", help="select your file", action="store", type=str, dest="file", default="weather.nominal.arff")
-parser.add_argument("--target", help="select your target", action="store", type=str, dest="target", default="play")
+parser.add_argument("--file", help="select your file", action="store", type=str, dest="file", default="restaurant.arff")
+parser.add_argument("--target", help="select your target", action="store", type=str, dest="target", default="WillWait")
 args = parser.parse_args()
 
 with open(args.file) as f:
