@@ -12,7 +12,7 @@ class Attr:
         self.values = set()
 
         self.type = "enum"
-        
+
         if line[attr_list] == '{':
             end = line.index('}')
             self.values = set([x.strip() for x in line[attr_list+1:end].split(',')])
@@ -25,12 +25,6 @@ class Attr:
 
     def is_numeric(self):
         return self.type == "numeric"
-    
-    def is_str(self):
-        return self.type == "string"
-
-    def is_enum(self):
-        return self.type == "enum"
 
     def __repr__(self):
         return self.name + ": " + self.values.__repr__()
@@ -46,7 +40,7 @@ class EntryData:
     def __repr__(self):
         return self.value
 
-class Entry:    
+class Entry:
     def __init__(self, line, attrs):
         self.line_ = line
 
@@ -56,10 +50,7 @@ class Entry:
         token_end = line.index(',')
 
         for attr in attrs:
-            token = line[token_beg:token_end]
-            
-            if attr.is_numeric():
-                attr.offer(token)
+            token = line[token_beg:token_end].strip()
 
             token_beg = token_end + 1
             token_end = line.find(',', token_beg)
@@ -70,58 +61,46 @@ class Entry:
 
     def classified(self, eattr):
         for attr in self.attrs:
+            # attr.attr.name == eattr.attr.name
             if attr.is_attr(eattr.attr):
                 return attr.value == eattr.value
         return False
 
-def split(set, attr, value):
-    eattr = EntryData(attr, value)
-    return [x for x in set if x.classified(eattr)]
+    def __repr__(self):
+        return self.attrs.__repr__()
 
-def entropy(set, target_attr):
-    if len(set) == 0:
+def split(dataset, attr, value):
+    eattr = EntryData(attr, value)
+    return [x for x in dataset if x.classified(eattr)]
+
+def entropy(dataset, target_attr):
+    if len(dataset) == 0:
         return 0
 
-    labels = {}
-    for label in target_attr.values:
-        labels[label] = 0
-
-    # count
-    for entry in set:
-        for label in target_attr.values:
-            if entry.classified(EntryData(target_attr, label)):
-                labels[label] = labels[label] + 1
-    
-    # probabilities: px(i)
-    for label in labels:
-        count = labels[label]
-        labels[label] = count / float(len(set))
-
     total_entropy = 0
-    for label in labels:
-        px = labels[label]
-        entropy = 0
-        if px != 0:
-            entropy = - px * log(px, 2)
-        total_entropy = total_entropy + entropy
-    
+    for label in target_attr.values:
+        freq = len(split(dataset, target_attr, label))
+        px = freq / float(len(dataset))
+        if freq != 0:
+            total_entropy = total_entropy - px * log(px, 2)
+
     return total_entropy
 
-def pick_attr(dataset, target_attr, availible_attr):
+def pick_attr(dataset, target_attr, available_attr):
     """ Pick the attribute from available_attr that results
         in the maximal information gain with respect to target_attr.
     """
-    items = len(dataset)
+    n_dataset = float(len(dataset))
     before = entropy(dataset, target_attr)
-    best_attri = availible_attr[0]
+    best_attri = available_attr[0]
     best_gain = 0
 
-    for attr in availible_attr:
+    for attr in available_attr:
         attr_gain = before
         for label in attr.values:
             split_dataset = split(dataset, attr, label)
             e = entropy(split_dataset, target_attr)
-            gain = - (len(split_dataset) / float(items)) * e
+            gain = - (len(split_dataset) / n_dataset) * e
             attr_gain += gain
         if attr_gain > best_gain:
             best_attri = attr
@@ -139,7 +118,7 @@ def find_optimal_label(dataset, target_attr):
         if len(split_set) > best_cmp:
             best_value = value
             best_cmp = len(split_set)
-    
+
     return best_value
 
 def ID3_init(dataset, target_attr, initial_attrs):
@@ -172,9 +151,9 @@ def ID3(dataset, target_attr, remaining_attr, parent_attr, branch_label):
     for label in best_attr.values:
         split_dataset = split(dataset, best_attr, label)
         if len(split_dataset) == 0:
-            best_value = find_optimal_label(dataset, target_attr)
-            root.add_child(node.LeafNode(best_attr, label, best_value))
+            best_label = find_optimal_label(dataset, target_attr)
+            root.add_child(node.LeafNode(best_attr, label, best_label))
         else:
             root.add_child(ID3(split_dataset, target_attr, remaining_attr, best_attr, label))
-    
+
     return root
